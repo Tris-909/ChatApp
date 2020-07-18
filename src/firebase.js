@@ -2,7 +2,7 @@
   import 'firebase/auth';
   import 'firebase/database';
   import 'firebase/storage';
-  
+
   // Your web app's Firebase configuration
   var firebaseConfig = {
     apiKey: "AIzaSyACH67mD4q9tUkXOqlnmBAmLc-iQKXK5uM",
@@ -16,3 +16,5 @@
 
   // Initialize Firebase
   firebase.initializeApp(firebaseConfig);
+
+  export default firebase;
