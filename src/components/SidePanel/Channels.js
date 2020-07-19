@@ -1,15 +1,69 @@
 import React, { Component } from 'react'
 import { Menu, Icon, Modal, Form, Input, Button } from 'semantic-ui-react';
-
+import firebase from '../../firebase';
 
 export class Channels extends Component {
     state = {
+        user: this.props.currentUser,
         channels: [],
         channelName: '',
         channelDetails: '', 
-        modal: false
+        modal: false,
+        channelsRef: firebase.database().ref('channels')
     }
     
+    componentDidMount() {
+        this.addListeners();
+    }
+
+    addListeners = () => {
+        let loadedChannels = [];
+        this.state.channelsRef.on('child_added', snap => {
+            loadedChannels.push(snap.val());
+            this.setState({
+                channels: loadedChannels
+            });
+        });
+    }
+
+    handleSubmit = event => {
+        event.preventDefault();
+        if (this.isFormValid(this.state)) {
+            this.addChannel();
+        }
+    }
+
+    addChannel = () => {
+        const { user, channelsRef, channelName, channelDetails } = this.state;
+
+        const key = channelsRef.push().key;
+
+        const newChannel = {
+            id: key,
+            name: channelName,
+            details: channelDetails,
+            createdBy: {
+                name: user.displayName,
+                avatar: user.photoURL
+            }
+        }
+
+        channelsRef.child(key).update(newChannel)
+        .then(() => {
+            this.setState({
+                channelName: '',
+                channelDetails: ''
+            });
+            this.closeModal();
+            console.log('channel added');
+        })
+        .catch((err) => {
+            console.log(err);
+        });
+    }
+
+    isFormValid = ({ channelName, channelDetails }) => channelName && channelDetails;
+
     handleChange = event => {
         this.setState({
             [event.target.name]: event.target.value
@@ -28,6 +82,18 @@ export class Channels extends Component {
         });
     }
 
+    displayChannels = channels => (
+        channels.length > 0 && channels.map(channel => (
+            <Menu.Item
+                key={channel.id}
+                onClick={() => console.log(channel)}
+                name={channel.name}
+                style={{ opacity: 0.7 }}>
+                    # {channel.name}
+            </Menu.Item>
+        ))
+    );
+
     render() {
         const { channels, modal } = this.state;
 
@@ -41,6 +107,7 @@ export class Channels extends Component {
                     ({ channels.length }) <Icon name="add" onClick={this.openModal} />
                 </Menu.Item>
                 {/* Channels */}
+                {this.displayChannels(channels)}
             </Menu.Menu>
 
             <Modal basic open={modal} onClose={this.closeModal}>
@@ -48,7 +115,7 @@ export class Channels extends Component {
                     Add a Channel
                 </Modal.Header>
                 <Modal.Content>
-                    <Form>
+                    <Form onSubmit={this.handleSubmit}>
                         <Form.Field>
                             <Input 
                                 fluid 
@@ -74,7 +141,7 @@ export class Channels extends Component {
                         <Icon name="remove" /> Cancel
                     </Button>
 
-                    <Button color="green" inverted>
+                    <Button color="green" onClick={this.handleSubmit} inverted>
                         <Icon name="checkmark" /> Add
                     </Button>
                 </Modal.Actions>
