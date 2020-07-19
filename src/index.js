@@ -2,23 +2,36 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import registerServiceWorker from './registerServiceWorker';
 import 'semantic-ui-css/semantic.min.css'
+import firebase from './firebase';
 
 //** COMPONENTS */
 import App from './components/App';
 import Login from './components/Auth/Login';
 import SignUp from './components/Auth/SignUp';
 
-import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Switch, Route, withRouter } from 'react-router-dom';
 
-const Root = () => (
-    <Router>
-        <Switch>
-            <Route exact path="/" component={App} />   
-            <Route  path="/login" component={Login} />   
-            <Route  path="/signup" component={SignUp} />   
-        </Switch>
-    </Router>
-);
+class Root extends React.Component {
+    componentDidMount() {
+        firebase.auth().onAuthStateChanged(user => {
+            if (user) {
+                this.props.history.push('/');
+            }
+        });
+    } 
 
-ReactDOM.render(<Root />, document.getElementById('root'));
+    render() {
+        return (
+            <Switch>
+                <Route exact path="/" component={App} />   
+                <Route  path="/login" component={Login} />   
+                <Route  path="/signup" component={SignUp} />   
+            </Switch>
+        );
+    }
+}
+
+const RootWithAuth = withRouter(Root);
+
+ReactDOM.render(<Router><RootWithAuth /></Router>, document.getElementById('root'));
 registerServiceWorker();
