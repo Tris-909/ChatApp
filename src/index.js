@@ -8,6 +8,7 @@ import firebase from './firebase';
 import App from './components/App';
 import Login from './components/Auth/Login';
 import SignUp from './components/Auth/SignUp';
+import Spinner from './Spinner';
 
 import { BrowserRouter as Router, Switch, Route, withRouter } from 'react-router-dom';
 
@@ -30,7 +31,7 @@ class Root extends React.Component {
     } 
 
     render() {
-        return (
+        return this.props.isLoading ? <Spinner /> : (
             <Switch>
                 <Route exact path="/" component={App} />   
                 <Route  path="/login" component={Login} />   
@@ -40,7 +41,11 @@ class Root extends React.Component {
     }
 }
 
-const RootWithAuth = withRouter(connect(null, { setUser })(Root));
+const mapStateToProps = state => ({
+    isLoading: state.user.isLoading
+});
+
+const RootWithAuth = withRouter(connect(mapStateToProps, { setUser })(Root));
 
 ReactDOM.render(<Provider store={store}><Router><RootWithAuth /></Router></Provider>, document.getElementById('root'));
 registerServiceWorker();
