@@ -60,8 +60,4 @@ export class UserPanel extends Component {
     }
 }
 
-const mapStateToProps = (state) => ({
-    currentUser: state.user.currentUser
-});
-
 export default UserPanel;
