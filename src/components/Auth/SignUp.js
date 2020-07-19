@@ -9,8 +9,11 @@ export class SignUp extends Component {
         email: '',
         password: '',
         confirmPassword: '',
-        errors: []
+        errors: [],
+        loading: false
     }
+
+    //** VALIDATION */
 
     formValid = () => {
         let errors = [];
@@ -55,7 +58,11 @@ export class SignUp extends Component {
         }
     }
 
+    //** DISPLAY ERRORS */
+
     displayErrors = errors => errors.map((error, index) => (<p key={index}>{error.message}</p>));
+
+    //** HANDLER FUNCTIONS */
 
     handleChange = (event) => {
         this.setState({
@@ -64,32 +71,45 @@ export class SignUp extends Component {
     }
 
     handleSubmit = (event) => {
+        event.preventDefault();
         if (this.formValid()) {
-            event.preventDefault();
+            this.setState({
+                errors: [],
+                loading: true
+            });
             firebase.auth().createUserWithEmailAndPassword(this.state.email, this.state.password)
             .then(createdUser => {
                 console.log(createdUser); 
+                this.setState({
+                    username: '',
+                    email: '',
+                    password: '',
+                    confirmPassword: '',
+                    loading: false
+                });
             })
             .catch(err => {
                 console.log(err);
-            });
-            this.setState({
-                username: '',
-                email: '',
-                password: '',
-                confirmPassword: ''
+                this.setState({
+                    errors: this.state.errors.concat(err) ,
+                    loading: false
+                });
             });
         }
     }
 
+    handleInputErrors = (errors, inputName) => {
+        return errors.some(error => error.message.toLowerCase().includes(inputName)) ? 'error' : '';
+    }
+
     render() {
-        const { username, email, password, confirmPassword, errors } = this.state;
+        const { username, email, password, confirmPassword, errors, loading } = this.state;
 
         return (
             <Grid textAlign="center" verticalAlign="middle" className="app">
                 <Grid.Column style={{ maxWidth: 450}}>
-                    <Header as="h2" icon color="orange" textAlign="center">
-                        <Icon name="puzzle piece" color="orange"/>
+                    <Header as="h2" icon color="black" textAlign="center">
+                        <Icon name="puzzle piece" color="black"/>
                         Register for FreiiChatRoom
                     </Header>
                     <Form onSubmit={this.handleSubmit} size="large">
@@ -111,7 +131,8 @@ export class SignUp extends Component {
                                 icon="mail" 
                                 iconPosition="left" 
                                 placeholder="Your Email" 
-                                onChange={this.handleChange} 
+                                onChange={this.handleChange}
+                                className={this.handleInputErrors(errors, 'email')} 
                                 value={email}
                                 type="email" 
                             />
@@ -122,7 +143,8 @@ export class SignUp extends Component {
                                 icon="lock" 
                                 iconPosition="left" 
                                 placeholder="Your Password" 
-                                onChange={this.handleChange} 
+                                onChange={this.handleChange}
+                                className={this.handleInputErrors(errors, 'password')}  
                                 value={password}
                                 type="password" 
                             />
@@ -134,14 +156,17 @@ export class SignUp extends Component {
                                 iconPosition="left" 
                                 placeholder="Re-type Your Password" 
                                 onChange={this.handleChange} 
+                                className={this.handleInputErrors(errors, 'confirmPassword')}  
                                 value={confirmPassword}
                                 type="password" 
                             />
 
                             <Button 
-                                color="orange" 
+                                color="black" 
                                 fluid
-                                size="large">
+                                size="large"
+                                disabled={ loading }
+                                className={loading ? 'loading' : ''} >
                                     Submit
                             </Button>    
                         </Segment>
