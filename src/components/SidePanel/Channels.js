@@ -33,7 +33,7 @@ export class Channels extends Component {
     }
 
     removeListeners = () => {
-        this.state.channelsRef.off();
+        this.state.channelsRef.off();   
     }
 
     setFirstChannel = () => {

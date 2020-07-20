@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import {Segment, Button, Input} from 'semantic-ui-react';
 import firebase from '../../firebase';
+import FileModal from './FileModal';
 
 export class MessageForm extends Component {
     state = {
@@ -8,7 +9,16 @@ export class MessageForm extends Component {
         loading: false,
         channel: this.props.channel,
         user: this.props.user,
-        errors: []
+        errors: [],
+        modal: false
+    }
+
+    openModal = () => {
+        this.setState({ modal: true });
+    }
+
+    closeModal = () => {
+        this.setState({ modal: false });
     }
 
     handleChange = (event) => {
@@ -17,6 +27,12 @@ export class MessageForm extends Component {
         });
     }
     
+    handleKeyPres = (event) => {
+        if (event.key === 'Enter') {
+            this.sendMessages();
+        }
+    }
+
     createMessage = () => {
         const message = {
             content: this.state.message,
@@ -57,14 +73,13 @@ export class MessageForm extends Component {
                 errors: this.state.errors.concat({ message: 'Add a message' })
             });
         }
-
     }
 
     render() {
-        const { errors, message, loading } = this.state;
+        const { errors, message, loading, modal } = this.state;
 
         return (
-            <Segment className="message__form">
+            <Segment className="message__form" >
                 <Input 
                     fluid 
                     name="message" 
@@ -73,8 +88,9 @@ export class MessageForm extends Component {
                     onChange={this.handleChange}
                     labelPosition="left" 
                     value={message}
+                    onKeyPress={this.handleKeyPres}
                     className = {
-                        errors.some(error => error.includes('message')) ? 'error': ''
+                        errors.some(error => error.message.includes('message')) ? 'error' : ''
                     }
                     placeholder="Write your message"
                 />
@@ -89,9 +105,14 @@ export class MessageForm extends Component {
                     />
                     <Button 
                         color="teal"
-                        content="Upload Media"
+                        content="Upload Media" 
+                        onClick={this.openModal} 
                         labelPosition="right"
                         icon="cloud upload"
+                    />
+                    <FileModal 
+                        modal={modal}
+                        closeModal={this.closeModal}
                     />
                 </Button.Group>
             </Segment>

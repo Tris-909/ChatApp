@@ -20,6 +20,7 @@ class Messages extends React.Component {
         if (channel && user) {
             this.addListener(channel.id);
         }
+        this.displayMessages(this.state.messages);
     }
 
     addListener = channelID => {
@@ -30,11 +31,11 @@ class Messages extends React.Component {
         let loadedMessages = [];
         this.state.messagesRef.child(channelID).on('child_added', snap => {
             loadedMessages.push(snap.val());
+            this.setState({
+                messages: loadedMessages,
+                messagesLoading: false
+            });
             console.log(loadedMessages);
-        });
-        this.setState({
-            messages: loadedMessages,
-            messagesLoading: false
         });
     }
  
