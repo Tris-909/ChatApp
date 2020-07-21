@@ -1,4 +1,5 @@
 import React, { Component } from 'react'
+import uuidv4 from 'uuid/v4';
 import {Segment, Button, Input} from 'semantic-ui-react';
 import firebase from '../../firebase';
 import FileModal from './FileModal';
@@ -10,7 +11,11 @@ export class MessageForm extends Component {
         channel: this.props.channel,
         user: this.props.user,
         errors: [],
-        modal: false
+        modal: false,
+        uploadState: '',
+        uploadTask: null,
+        storageRef: firebase.storage().ref(),
+        percentUploaded: 0
     }
 
     openModal = () => {
@@ -33,15 +38,19 @@ export class MessageForm extends Component {
         }
     }
 
-    createMessage = () => {
+    createMessage = (fileUrl = null) => {
         const message = {
-            content: this.state.message,
             timestamp: firebase.database.ServerValue.TIMESTAMP,
             user: {
                 id: this.state.user.uid,
                 name: this.state.user.displayName,
                 avatar: this.state.user.photoURL
             } 
+        }
+        if (fileUrl !== null) {
+            message['image'] = fileUrl;
+        } else {
+            message['content'] = this.state.message;
         }
         return message; 
     }
@@ -76,7 +85,55 @@ export class MessageForm extends Component {
     }
 
     uploadFile = (file, metaData) => {
-        console.log(file, metaData);
+        const pathToUpload = this.state.channel.id;
+        const ref = this.props.messagesRef;
+        const filePath = `chat/public/${uuidv4()}.jpg`;
+
+        this.setState({
+            uploadState: 'uploading',
+            uploadTask: this.state.storageRef.child(filePath).put(file, metaData)
+        }, () => {
+            this.state.uploadTask.on('state_changed', snap => {
+                const percentUploaded = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+                this.setState({ percentUploaded: percentUploaded });
+            }, 
+                err => {
+                    console.log(err);
+                    this.setState({
+                        errors: this.state.errors.concat(err),
+                        uploadState: 'error',
+                        uploadTask: null
+                    });
+                },
+                () => {
+                    this.state.uploadTask.snapshot.ref.getDownloadURL().then(downloadUrl => {
+                        this.sendFileMessages(downloadUrl, ref, pathToUpload); 
+                    }).catch(err => {
+                        console.log(err);
+                        this.setState({
+                            errors: this.state.errors.concat(err),
+                            uploadState: 'error',
+                            uploadTask: null
+                        });
+                    })
+                })
+            })
+    }
+
+    sendFileMessages = (fileUrl, ref, pathToUpload) => {
+        console.log('sendFileMessages fired')
+        ref.child(pathToUpload).push().set(this.createMessage(fileUrl))
+        .then(() => {
+            this.setState({
+                uploadState: 'done'
+            })
+        })
+        .catch(err => {
+            console.log(err);
+            this.setState({
+                errors: this.state.errors.concat(err)
+            })
+        })
     }
 
     render() {
@@ -93,9 +150,9 @@ export class MessageForm extends Component {
                     labelPosition="left" 
                     value={message}
                     onKeyPress={this.handleKeyPres}
-                    className = {
-                        errors.some(error => error.message.includes('message')) ? 'error' : ''
-                    }
+                    // className = {
+                    //     errors.some(error => error.message.includes('message')) ? 'error' : ''
+                    // }   
                     placeholder="Write your message"
                 />
                 <Button.Group icon widths="2">

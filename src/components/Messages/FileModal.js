@@ -9,6 +9,14 @@ export class FileModal extends Component {
         authorized: ['image/jpeg', 'image/png']
     }
     
+    //TODO: PROCEDURES
+    // addFile => isAuthorized => uploadFile => closeModel => sendFile => clearFile
+    // addFile : chooseFile and save to state
+    // isAuthorized : checking fileTypes of the file
+    // uploadFile : upload the file to database
+    // sendFile : container of all the functions above
+    // clearFile : clear the choosen file in state 
+
     addFile = event => {
         const file = event.target.files[0];
         if (file) {
@@ -16,7 +24,6 @@ export class FileModal extends Component {
                 file: file
             });
         }
-        console.log(file);
     }
 
     sendFile = () => {
@@ -24,6 +31,7 @@ export class FileModal extends Component {
         const { uploadFile, closeModal } = this.props;
         if (file !== null) {
             if (this.isAuthorized(file.name)) {
+                //mime.lookup check for the file types 
                 const metaData = { contentType: mime.lookup(file.name) };
                 uploadFile(file, metaData);
                 closeModal();

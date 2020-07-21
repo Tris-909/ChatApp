@@ -35,7 +35,6 @@ class Messages extends React.Component {
                 messages: loadedMessages,
                 messagesLoading: false
             });
-            console.log(loadedMessages);
         });
     }
  
