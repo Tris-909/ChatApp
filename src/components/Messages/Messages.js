@@ -12,7 +12,10 @@ class Messages extends React.Component {
         user: this.props.user,
         messagesLoading: true,
         messages: [],
-        numbOfUniqueUsers: ''
+        numbOfUniqueUsers: '',
+        searchTerm: '',
+        searchLoading: false,
+        searchResults: []
     }
     
     componentDidMount() {
@@ -63,15 +66,34 @@ class Messages extends React.Component {
         ))
     )
 
+    handleSearchChange = (event) => {
+        this.setState({
+            searchTerm: event.target.value,
+            searchLoading: true
+        }, () => this.handleSearchMessages());
+    }
+
+    handleSearchMessages = () => {
+        const channelMessages = [...this.state.messages];
+        const regex = new RegExp(this.state.searchTerm, 'gi');
+        const searchResults = channelMessages.reduce((acc, message) => {
+            if (message.content && message.content.match(regex)) {
+                acc.push(message);
+            }
+            console.log(acc);
+            return acc;
+        }, []);
+        this.setState({ searchResults });
+    }
+
     render() {
-        const { messagesRef, messages, messagesLoading, channel, user, numbOfUniqueUsers } = this.state;
+        const { messagesRef, messages, messagesLoading, channel, user, numbOfUniqueUsers, searchResults, searchTerm } = this.state;
         return(
             <React.Fragment>
-                <MessagesHeader channel={channel} numbOfUniqueUsers={numbOfUniqueUsers}/>
+                <MessagesHeader channel={channel} numbOfUniqueUsers={numbOfUniqueUsers} handleSearchChange={this.handleSearchChange}/>
                 <Segment>
                     <Comment.Group style={{maxWidth: '100%'}} className="messages">
-                    {/* Message */}
-                    {this.displayMessages(messages)}
+                    {searchTerm ? this.displayMessages(searchResults) : this.displayMessages(messages) } 
                     </Comment.Group>
                 </Segment>
                 <MessageForm messagesRef = {messagesRef} channel={channel} user={user} />
